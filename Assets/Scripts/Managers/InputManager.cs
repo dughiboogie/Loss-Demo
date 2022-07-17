@@ -1,38 +1,41 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class InputManager : MonoBehaviour
 {
     public static InputManager instance;
-
-    private float inputCooldownCounter;
-    public bool inputIsFree = true;
+    
+    private bool inputIsFree = true;
+    public bool InputIsFree
+    {
+        get { return inputIsFree; }
+    }
 
     private void Awake()
     {
+        #region Singleton
+
         if(instance != null) {
             Debug.LogWarning("Multiple instances of InputManager found!");
             return;
         }
         instance = this;
+
+        #endregion
     }
 
-    private void Update()
+    public void BlockInput()
     {
-        // Prevent new inputs
-        if(inputCooldownCounter > 0) {
-            inputCooldownCounter -= Time.deltaTime;
+        if(!inputIsFree) {
+            Debug.LogWarning("Input is already blocked!");
         }
-        // If inputCooldownCounter <= 0 and new inputs are blocked, unblock them
-        else if(!inputIsFree) {
-            inputIsFree = true;
-        }
-    }
-
-    public void BlockInput(float inputCooldown = .1f)
-    {
         inputIsFree = false;
-        inputCooldownCounter = inputCooldown;
+    }
+
+    public void UnblockInput()
+    {
+        if(inputIsFree) {
+            Debug.LogWarning("Input is already free!");
+        }
+        inputIsFree = true;
     }
 }

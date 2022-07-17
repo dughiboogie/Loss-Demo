@@ -3,10 +3,13 @@ using UnityEngine.InputSystem;
 
 public class PlayerController2D : MonoBehaviour
 {
+    public static PlayerController2D instance;
+
     [Header("GameObject assignments")]
     private new Rigidbody2D rigidbody;
     private new BoxCollider2D collider;
-    private PlayerGFX GFX;
+    protected PlayerGFX GFX;
+    /*
     [SerializeField] private LayerMask whatIsGround;
     [SerializeField] private Transform groundCheck;
     [SerializeField] private Transform ledgeGrab;
@@ -15,6 +18,7 @@ public class PlayerController2D : MonoBehaviour
     [SerializeField] private Transform wallCheckHigh;
     [SerializeField] private Transform wallCheckLow;
     [SerializeField] private Transform cameraTarget;
+    */
 
     [Header("Movement")]
     [SerializeField] private float movementSpeed = 7f;
@@ -28,8 +32,9 @@ public class PlayerController2D : MonoBehaviour
     [SerializeField] private float wallJumpMovementCooldown = .15f;
     public bool isGrounded;
     private float groundCheckCircleRadius; // Radius of CircleCollider2D that checks if player is grounded
-    private bool wasOnGround = true; // Last frame's isGrounded value
+    protected bool wasOnGround = true; // Last frame's isGrounded value
 
+    /*
     [Header("Dash")]
     [SerializeField] private float dashValue = 20f;
     private float currentDashDuration = 0;
@@ -38,6 +43,7 @@ public class PlayerController2D : MonoBehaviour
     private float dashCooldownCounter = 0f;
     private int maxDashInAir = 1;
     private int dashInAirCounter = 0;
+    */
 
     [Header("Camera movement")]
     [SerializeField] private float lookAtDistance = 3.5f; // Distance that the target of the camera moves on input
@@ -50,9 +56,9 @@ public class PlayerController2D : MonoBehaviour
     private RaycastHit2D wallCheckHit;
     private RaycastHit2D wallCheckHighHit;
     private RaycastHit2D wallCheckLowHit;
-    private bool isHanging = false;
+    protected bool isHanging = false;
     private Vector2 ledgeHangDirection;
-    private bool isWallSliding = false;
+    protected bool isWallSliding = false;
     [SerializeField] private float wallStickingDuration = .2f;
     private float wallStickingDurationCounter;
     [SerializeField] private float ledgeHangCooldown = .1f;
@@ -60,16 +66,26 @@ public class PlayerController2D : MonoBehaviour
 
     private void Awake()
     {
+        #region Singleton
+
+        if(instance != null) {
+            Debug.LogWarning("Multiple instances of PlayerController2D found!");
+        }
+        instance = this;
+
+        #endregion
+
         GFX = GetComponent<PlayerGFX>();
         rigidbody = GetComponent<Rigidbody2D>();
         collider = GetComponent<BoxCollider2D>();
-        groundCheckCircleRadius = groundCheck.GetComponent<CircleCollider2D>().radius;
     }
+
+
 
     private void Update()
     {
         // Check every frame if player is grounded
-        isGrounded = Physics2D.OverlapCircle(groundCheck.position, groundCheckCircleRadius, whatIsGround);
+        isGrounded = PlayerStatusManager.instance.IsGrounded;
         GFX.SetIsGrounded(isGrounded);
 
         // Check if player game object has to be flipped based on moveHorizontal value
@@ -121,6 +137,8 @@ public class PlayerController2D : MonoBehaviour
         }
         #endregion
 
+        /*
+
         #region Dashes
 
         // When player hits the ground or sticks to a wall reset the air dash counter
@@ -153,6 +171,8 @@ public class PlayerController2D : MonoBehaviour
         }
 
         #endregion
+
+        */
 
         // Reset camera target position if player is moving or not grounded
         if(moveHorizontal != 0 || !isGrounded) {
@@ -234,10 +254,15 @@ public class PlayerController2D : MonoBehaviour
         }
     }
 
+
+    
+
     /*
      * Thrust player forward and set a cooldown for the next time he can dash.
      * If player is in mid-air he can dash only one time.
      */
+    
+    /*
     public void Dash(InputAction.CallbackContext context)
     {
         if(PowersManager.instance.IsPowerActive("Dash") && context.performed) {
@@ -257,6 +282,7 @@ public class PlayerController2D : MonoBehaviour
             }
         }
     }
+    */
 
     /*
      * On left stick held down move the camera target down, on release move it back up
@@ -342,7 +368,7 @@ public class PlayerController2D : MonoBehaviour
         GFX.StopGroundImpactParticles();
 
         // When player jumps set dash cooldown counter to 0, to make him able to dash right away
-        dashCooldownCounter = 0;
+        dash.DashCooldownCounter = 0;
 
         // AudioManager.instance.Play("Player_Jump");
     }
@@ -481,8 +507,8 @@ public class PlayerController2D : MonoBehaviour
         // Player just hit a wall in mid-air
         else {
             // If player is dashing stop it to prevent glitches
-            if(currentDashDuration > 0) {
-                currentDashDuration = 0f;
+            if(dash.CurrentDashDuration > 0) {
+                dash.CurrentDashDuration = 0f;
             }
             isWallSliding = true;
             GFX.SetWallSlide(isWallSliding);
@@ -597,7 +623,7 @@ public class PlayerController2D : MonoBehaviour
         }
     }
     
-    private void FlipPlayerObject()
+    protected void FlipPlayerObject()
     {
         if(facingDirection == -1) {
             transform.Rotate(0, 180, 0);
